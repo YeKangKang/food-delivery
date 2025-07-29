@@ -1,6 +1,7 @@
 package com.sky.interceptor;
 
 import com.sky.constant.JwtClaimsConstant;
+import com.sky.context.BaseContext;
 import com.sky.properties.JwtProperties;
 import com.sky.utils.JwtUtil;
 import io.jsonwebtoken.Claims;
@@ -23,7 +24,7 @@ public class JwtTokenAdminInterceptor implements HandlerInterceptor {
     private JwtProperties jwtProperties;
 
     /**
-     * 校验jwt
+     * 在进入 controller 之前拦截所有访问的请求，校验jwt
      *
      * @param request
      * @param response
@@ -38,15 +39,16 @@ public class JwtTokenAdminInterceptor implements HandlerInterceptor {
             return true;
         }
 
-        //1、从请求头中获取令牌
-        String token = request.getHeader(jwtProperties.getAdminTokenName());
+        //1、从请求头中获取令牌（获取请求头中名为 "token" 的 value）
+        String token = request.getHeader(jwtProperties.getAdminTokenName()); // 名字是读取的 application.yml 配置（非硬编码），所以测试时附带的令牌也必须叫 “token”
 
         //2、校验令牌
         try {
             log.info("jwt校验:{}", token);
-            Claims claims = JwtUtil.parseJWT(jwtProperties.getAdminSecretKey(), token);
-            Long empId = Long.valueOf(claims.get(JwtClaimsConstant.EMP_ID).toString());
-            log.info("当前员工id：", empId);
+            Claims claims = JwtUtil.parseJWT(jwtProperties.getAdminSecretKey(), token); // 使用密钥解密用户令牌
+            Long empId = Long.valueOf(claims.get(JwtClaimsConstant.EMP_ID).toString()); // 获取载荷中的数据（ID）
+            log.info("当前员工id：{}", empId);
+            BaseContext.setCurrentId(empId); // 当前用户 ID 存入 ThreadLocal 中实现跨层、非注入式的数据共享
             //3、通过，放行
             return true;
         } catch (Exception ex) {
