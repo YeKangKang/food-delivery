@@ -5,6 +5,7 @@ import com.sky.dto.EmployeePageQueryDTO;
 import com.sky.entity.Employee;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
 @Mapper
@@ -36,8 +37,16 @@ public interface EmployeeMapper {
     Page<Employee> pageQuery(EmployeePageQueryDTO employeePageQueryDTO);
 
     /**
-     * 启用、禁用员工账号
+     * 编辑员工信息
      * @param employee
      */
     void update(Employee employee);
+
+    /**
+     * 根据ID查询员工信息
+     * @param id
+     * @return
+     */
+    @Select("select * from employee where id = #{id}")
+    Employee getById(@Param("id") long id); // SpringBoot 默认开启 -parameter，@Param 不是必须的
 }
