@@ -83,13 +83,13 @@ public class EmployeeServiceImpl implements EmployeeService {
         // 设置 status
         employee.setStatus(StatusConstant.ENABLE);
 
+        // 通过 AOP 统一处理
         //设置创建时间和修改时间
-        employee.setCreateTime(LocalDateTime.now());
-        employee.setUpdateTime(LocalDateTime.now());
-
+        //employee.setCreateTime(LocalDateTime.now());
+        //employee.setUpdateTime(LocalDateTime.now());
         // 获取当前记录创建人id和修改人id
-        employee.setCreateUser(BaseContext.getCurrentId());
-        employee.setUpdateUser(BaseContext.getCurrentId());
+        //employee.setCreateUser(BaseContext.getCurrentId());
+        //employee.setUpdateUser(BaseContext.getCurrentId());
 
         employeeMapper.insert(employee);
     }
@@ -150,8 +150,11 @@ public class EmployeeServiceImpl implements EmployeeService {
         // 转换为 Employee 实体类对象
         Employee employee = new Employee();
         BeanUtils.copyProperties(employeeDTO, employee); // BeanUtils 拷贝方便一点，builder 也可以
-        employee.setUpdateTime(LocalDateTime.now()); // 设置没法拷贝的值
-        employee.setUpdateUser(BaseContext.getCurrentId()); // 从 ThreadLocal 工具类获取操作者 ID
+
+        // 通过 AOP 统一处理
+        //employee.setUpdateTime(LocalDateTime.now()); // 设置没法拷贝的值
+        //employee.setUpdateUser(BaseContext.getCurrentId()); // 从 ThreadLocal 工具类获取操作者 ID
+
         employeeMapper.update(employee);
     }
 
