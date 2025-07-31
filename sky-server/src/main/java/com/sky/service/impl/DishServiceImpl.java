@@ -156,4 +156,21 @@ public class DishServiceImpl implements DishService {
             dishFlavorMapper.insertBatch(flavors);   // 动态插入 dish_flavor 表中
         }
     }
+
+    /**
+     * 菜品启售、停售
+     * @param status
+     * @param id
+     * @return
+     */
+    @Override
+    public void startOrStop(Integer status, Long id) {
+        // 通过实体类和 MyBatis 交互
+        Dish dish = Dish.builder()
+                        .id(id)
+                        .status(status)
+                        .build();
+
+        dishMapper.update(dish);
+    }
 }
