@@ -61,4 +61,11 @@ public interface DishMapper {
 
     @Select("select * from dish where category_id = #{categoryId}")
     List<Dish> getByCategoryId(@Param("categoryId") Long categoryId);
+
+    /**
+     * 根据ids找到所有的dish
+     * @param dishIds
+     * @return
+     */
+    List<Dish> getByIds(@Param("dishIds") List<Long> dishIds);
 }

@@ -5,11 +5,14 @@ import com.sky.dto.SetmealPageQueryDTO;
 import com.sky.result.PageResult;
 import com.sky.result.Result;
 import com.sky.service.SetmealService;
+import com.sky.vo.SetmealVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 /**
  * 套餐管理
@@ -47,5 +50,58 @@ public class SetmealController {
         log.info("套餐分页查询: {}", setmealPageQueryDTO);
         PageResult pageResult = setmealService.page(setmealPageQueryDTO);
         return Result.success(pageResult);
+    }
+
+    /**
+     * 批量删除套餐
+     * @param ids
+     * @return
+     */
+    @DeleteMapping
+    @ApiOperation(value = "批量删除套餐")
+    public Result deleteByGivenIds(@RequestParam("ids") List<Long> ids) {
+        log.info("批量删除套餐：{}", ids);
+        setmealService.deleteBatch(ids);
+        return Result.success();
+    }
+
+    /**
+     * 根据id查询套餐，用于修改页面回显数据
+     * @param id
+     * @return
+     */
+    @GetMapping("/{id}")
+    @ApiOperation(value = "根据 id 查询套餐")
+    public Result<SetmealVO> getSetmealById(@PathVariable("id") Long id) {
+        log.info("根据 id 查询套餐：{}", id);
+        SetmealVO setmealVO = setmealService.getSetMealAndSetmealDishById(id);
+        return Result.success(setmealVO);
+    }
+
+    /**
+     * 修改套餐
+     * @param setmealDTO
+     * @return
+     */
+    @PutMapping
+    @ApiOperation(value = "修改套餐")
+    public Result update(@RequestBody SetmealDTO setmealDTO) {
+        log.info("修改套餐餐：{}", setmealDTO);
+        setmealService.update(setmealDTO);
+        return Result.success();
+    }
+
+    /**
+     * 起售、停售套餐
+     * @param status
+     * @param id
+     * @return
+     */
+    @PostMapping("/status/{status}")
+    @ApiOperation(value = "起售、停售套餐")
+    public Result startOrStop(@PathVariable("status") Integer status, @RequestParam("id") Long id) {
+        log.info("起售、停售套餐 ===> id:{}, status:{}",id,status);
+        setmealService.startOrStop(status, id);
+        return Result.success();
     }
 }
