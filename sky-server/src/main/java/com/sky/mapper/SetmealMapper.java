@@ -57,4 +57,11 @@ public interface SetmealMapper {
      */
     @AutoFill(OperationType.UPDATE) // aop 添加更新时间
     void update(Setmeal setmeal);
+
+    /**
+     * 根据ids获得所有Setmeal
+     * @param setmealIdList
+     * @return
+     */
+    List<Setmeal> getSetMealByIds(@Param("setmealIdList") List<Long> setmealIdList);
 }

@@ -8,7 +8,9 @@ import com.sky.dto.DishDTO;
 import com.sky.dto.DishPageQueryDTO;
 import com.sky.entity.Dish;
 import com.sky.entity.DishFlavor;
+import com.sky.entity.Setmeal;
 import com.sky.exception.DeletionNotAllowedException;
+import com.sky.exception.DishDisableFaileException;
 import com.sky.mapper.*;
 import com.sky.result.PageResult;
 import com.sky.service.DishService;
@@ -34,6 +36,8 @@ public class DishServiceImpl implements DishService {
     private DishFlavorMapper dishFlavorMapper;
     @Autowired
     private SetmealDishMapper setmealDishMapper;
+    @Autowired
+    private SetmealMapper setmealMapper;
 
     /**
      * 新增菜品和对应的口味数据
@@ -165,12 +169,26 @@ public class DishServiceImpl implements DishService {
      */
     @Override
     public void startOrStop(Integer status, Long id) {
+        // 需求更改：如果菜品要停售，得先检查其是否关联了套餐，如果套餐是起售状态，则无法停售菜品
+        if (status == StatusConstant.DISABLE) {
+            // 获得 setmeal_dish 中所有和这个菜品有关的套餐id
+            List<Long> setmealIdList = setmealDishMapper.getSetmealIdListById(id);
+            // 根据 setmealId 获得 setmeal 对象组（如果存在），如果他们有一个是开启的，就抛出异常，不能停售菜品
+            if (setmealIdList != null && !setmealIdList.isEmpty()) { // 这里有可能获得一个空的 list（菜品没有被加入到套餐，所以一定要小心空指针）
+                List<Setmeal> setmealList = setmealMapper.getSetMealByIds(setmealIdList);
+                setmealList.forEach(setmeal -> {
+                    if (setmeal.getStatus() == StatusConstant.ENABLE) {
+                        throw new DishDisableFaileException(MessageConstant.DISH_DISABLE_FAILED);
+                    }
+                });
+            }
+        }
+
         // 通过实体类和 MyBatis 交互
         Dish dish = Dish.builder()
                         .id(id)
                         .status(status)
                         .build();
-
         dishMapper.update(dish);
     }
 
