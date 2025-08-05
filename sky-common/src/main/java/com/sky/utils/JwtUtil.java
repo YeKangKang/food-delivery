@@ -51,7 +51,7 @@ public class JwtUtil {
                 // 设置签名的秘钥
                 .setSigningKey(secretKey.getBytes(StandardCharsets.UTF_8))
                 // 设置需要解析的jwt
-                .parseClaimsJws(token).getBody();
+                .parseClaimsJws(token).getBody();   // .parseClaimsJws(token) 返回的是一个 Jws<Claims> 对象，我们需要取出payload（通过 getBody()）
         return claims;
     }
 

@@ -41,13 +41,14 @@ public class HttpClientUtil {
         CloseableHttpResponse response = null;
 
         try{
+            // 通过 URIBuilder 来将传入的 Map 以参数的形式拼接到请求的地址里
             URIBuilder builder = new URIBuilder(url);
             if(paramMap != null){
                 for (String key : paramMap.keySet()) {
                     builder.addParameter(key,paramMap.get(key));
                 }
             }
-            URI uri = builder.build();
+            URI uri = builder.build();  // 拼接好参数的地址
 
             //创建GET请求
             HttpGet httpGet = new HttpGet(uri);
