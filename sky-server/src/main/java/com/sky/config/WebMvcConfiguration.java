@@ -47,7 +47,7 @@ public class WebMvcConfiguration extends WebMvcConfigurationSupport {
                 .excludePathPatterns("/admin/employee/login");  // 登陆请求不拦截
         // 用户端拦截器
         registry.addInterceptor(jwtTokenUserInterceptor)
-                .addPathPatterns("user/**") // 拦截所有访问 “/user/” 开头的请求
+                .addPathPatterns("/user/**") // 拦截所有访问 “/user/” 开头的请求
                 .excludePathPatterns("/user/user/login")    // 登陆请求不拦截
                 .excludePathPatterns("/user/shop/status");  // 查看店铺营业状态不拦截
     }
