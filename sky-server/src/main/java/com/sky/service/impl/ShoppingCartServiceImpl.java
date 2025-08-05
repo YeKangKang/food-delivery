@@ -75,6 +75,10 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
         }
     }
 
+    /**
+     * 查看购物车
+     * @return
+     */
     @Override
     public List<ShoppingCart> showShoppingCart() {
         // 创建一个包含当前用户id的 shoppingCart 实体类，以供查询
@@ -83,5 +87,14 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
                 .build();
         List<ShoppingCart> shoppingCartList = shoppingCartMapper.list(shoppingCart);
         return shoppingCartList;
+    }
+
+    /**
+     * 清空购物车
+     */
+    @Override
+    public void cleanShoppingCart() {
+        Long userId = BaseContext.getCurrentId();// 通过 ThreadLocal 获得当前用户的id
+        shoppingCartMapper.deleteByUserId(userId);
     }
 }
