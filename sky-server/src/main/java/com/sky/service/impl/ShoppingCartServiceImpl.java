@@ -117,9 +117,9 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
             shoppingCart = shoppingCartList.get(0);
             // 检查返回数据的 number，如果为1则删除该数据
             if (shoppingCart.getNumber() == 1) {
-                shoppingCartMapper.deleteById(shoppingCart.getId());
+                shoppingCartMapper.deleteById(shoppingCart.getId());    // 删除特定id的购物车数据
             } else {    // 如果不为1，则减1
-                shoppingCart.setNumber(shoppingCart.getNumber() - 1);
+                shoppingCart.setNumber(shoppingCart.getNumber() - 1);   // 设置新的数量
                 shoppingCartMapper.updataNumberById(shoppingCart);
             }
         }
