@@ -64,7 +64,7 @@ public class OrderServiceImpl implements OrderService {
         orders.setOrderTime(LocalDateTime.now());                       // 订单创建时间
         orders.setPayStatus(Orders.UN_PAID);                            // 支付状态
         orders.setStatus(Orders.PENDING_PAYMENT);                       // 订单状态
-        orders.setNumber(String.valueOf(System.currentTimeMillis()));   // 用用户时间戳当订单号
+        orders.setNumber(String.valueOf(System.currentTimeMillis()));   // 用户时间戳当订单号
         orders.setPhone(ab.getPhone());                                 // 手机号（从 addressbook 对象中取）
         orders.setConsignee(ab.getConsignee());                         // 收货人（从 addressbook 对象中取）
         orders.setUserId(BaseContext.getCurrentId());                   // 用户id
