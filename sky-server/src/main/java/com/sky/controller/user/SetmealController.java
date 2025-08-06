@@ -30,7 +30,8 @@ public class SetmealController {
      */
     @GetMapping("/list")
     @ApiOperation("根据分类id查询套餐")
-    @Cacheable(cacheNames = "setmealCache", key = "#categoryId")
+    @Cacheable(cacheNames = "setmealCache", key = "#categoryId")    // 先查询缓存，不存在则查询数据库，并将结果存入缓存
+    // TODO 这里是 Spring Cache 的知识点，对应的还有 admin 包中的 SetmealController 类（负责删除缓存）
     public Result<List<Setmeal>> list(Long categoryId) {
         Setmeal setmeal = new Setmeal();
         setmeal.setCategoryId(categoryId);
