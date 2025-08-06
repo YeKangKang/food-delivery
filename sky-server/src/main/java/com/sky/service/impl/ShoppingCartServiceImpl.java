@@ -10,9 +10,11 @@ import com.sky.mapper.SetmealMapper;
 import com.sky.mapper.ShoppingCartMapper;
 import com.sky.service.ShoppingCartService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.awt.*;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -96,5 +98,30 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
     public void cleanShoppingCart() {
         Long userId = BaseContext.getCurrentId();// 通过 ThreadLocal 获得当前用户的id
         shoppingCartMapper.deleteByUserId(userId);
+    }
+
+    /**
+     * 减去购物车的一个商品
+     * @param shoppingCartDTO
+     */
+    @Override
+    public void sub(ShoppingCartDTO shoppingCartDTO) {
+        ShoppingCart shoppingCart = new ShoppingCart();
+        BeanUtils.copyProperties(shoppingCartDTO, shoppingCart);    // 把 dto 数据拷贝到 ShoppingCart 实体类
+        shoppingCart.setUserId(BaseContext.getCurrentId()); // 设置当前用户 id
+
+        List<ShoppingCart> shoppingCartList = shoppingCartMapper.list(shoppingCart);    // 获得前端需要操作的那条购物车数据
+
+        // 如果能查询到，那么列表只会有一个，且其是被减少操作的对象
+        if (shoppingCartList != null && !shoppingCartList.isEmpty()) {
+            shoppingCart = shoppingCartList.get(0);
+            // 检查返回数据的 number，如果为1则删除该数据
+            if (shoppingCart.getNumber() == 1) {
+                shoppingCartMapper.deleteById(shoppingCart.getId());
+            } else {    // 如果不为1，则减1
+                shoppingCart.setNumber(shoppingCart.getNumber() - 1);
+                shoppingCartMapper.updataNumberById(shoppingCart);
+            }
+        }
     }
 }
