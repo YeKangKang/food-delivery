@@ -1,9 +1,13 @@
 package com.sky.mapper;
 
+import com.github.pagehelper.Page;
+import com.sky.dto.OrdersPageQueryDTO;
 import com.sky.entity.Orders;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
+
+import java.util.List;
 
 @Mapper
 public interface OrderMapper {
@@ -26,4 +30,20 @@ public interface OrderMapper {
      * @param orders
      */
     void update(Orders orders);
+
+    /**
+     * 分页条件查询并按下单时间排序
+     * @param ordersPageQueryDTO
+     * @return
+     */
+    Page<Orders> pageQuery(OrdersPageQueryDTO ordersPageQueryDTO);
+
+    // TODO 注释后提交
+    /**
+     * 这是一个替换方法: 历史订单分页查询
+     * @param userId
+     * @return
+     */
+    @Select("select id from orders where user_id = #{userId}")
+    List<Long> getIdListByUserId(@Param("userId") Long userId);
 }

@@ -12,4 +12,11 @@
              #{i.dishFlavor},#{i.number},#{i.amount})
         </foreach>
     </insert>
+
+    <select id="getByOrderIdList" resultType="com.sky.entity.OrderDetail">
+        select * from order_detail where order_id in
+        <foreach collection="orderIdList" item="i" open="(" separator="," close=")">
+            #{i}
+        </foreach>
+    </select>
 </mapper>

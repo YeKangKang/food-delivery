@@ -1,8 +1,11 @@
 package com.sky.service.impl;
 
 import com.alibaba.fastjson.JSONObject;
+import com.github.pagehelper.Page;
+import com.github.pagehelper.PageHelper;
 import com.sky.constant.MessageConstant;
 import com.sky.context.BaseContext;
+import com.sky.dto.OrdersPageQueryDTO;
 import com.sky.dto.OrdersPaymentDTO;
 import com.sky.dto.OrdersSubmitDTO;
 import com.sky.entity.*;
@@ -10,10 +13,14 @@ import com.sky.exception.AddressBookBusinessException;
 import com.sky.exception.OrderBusinessException;
 import com.sky.exception.ShoppingCartBusinessException;
 import com.sky.mapper.*;
+import com.sky.result.PageResult;
+import com.sky.result.Result;
 import com.sky.service.OrderService;
 import com.sky.utils.WeChatPayUtil;
 import com.sky.vo.OrderPaymentVO;
 import com.sky.vo.OrderSubmitVO;
+import com.sky.vo.OrderVO;
+import org.aspectj.weaver.ast.Or;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -22,7 +29,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class OrderServiceImpl implements OrderService {
@@ -154,5 +163,94 @@ public class OrderServiceImpl implements OrderService {
                 .build();
 
         orderMapper.update(orders);
+    }
+
+    /**
+     * 历史订单分页查询
+     * @param page
+     * @param pageSize
+     * @param status
+     * @return
+     */
+    @Override
+    public PageResult page(Integer page, Integer pageSize, Integer status) {
+        // 设置 PageHelper 自动在SQL语句后插入LIMIT分页
+        PageHelper.startPage(page, pageSize);
+
+        // 1. 根据 用户id+status（如果提供） 查询所有订单
+        OrdersPageQueryDTO ordersPageQueryDTO = new OrdersPageQueryDTO();
+        ordersPageQueryDTO.setStatus(status);   // 要查询的订单状态
+        ordersPageQueryDTO.setUserId(BaseContext.getCurrentId());   // 要查询的用户id
+
+        // 分页查询 order
+        Page<Orders> ordersPage = orderMapper.pageQuery(ordersPageQueryDTO);
+
+        // 2. 根据 订单id 查询当前订单对应的所有商品，并封装成 OrderVO
+        List<OrderVO> orderVOList = new ArrayList<>();   // ResultPage 的list部分
+
+        if (ordersPage != null && !ordersPage.isEmpty()) {
+            for (Orders orders : ordersPage) {
+                // 查询和这个 order 的 id 对应的 OrderDetail 数据
+                List<OrderDetail> orderDetailList = orderDetailMapper.getByOrderId(orders.getId());
+
+                // 封装 Order 和 OrderDetail
+                OrderVO orderVO = new OrderVO();
+                BeanUtils.copyProperties(orders, orderVO);
+                orderVO.setOrderDetailList(orderDetailList);
+
+                orderVOList.add(orderVO);
+            }
+        }
+
+//        // 使用 Map 优化N+1查询的方法
+//        List<OrderVO> orderVOList = new ArrayList<>();
+//        if (ordersPage != null && !ordersPage.isEmpty()) {
+//            orderVOList = buildOrderVOList(ordersPage);
+//        }
+
+        return new PageResult(ordersPage.getTotal(), orderVOList);
+    }
+
+    // TODO 注释后提交
+    /**
+     * 这是一个替换方法: 用于替换查询detail并封装orderVO
+     * @param ordersPage    orders的分页对象
+     */
+    private List<OrderVO> buildOrderVOList(Page<Orders> ordersPage) {
+        // 获取当前用户的所有 orderId
+        // List<Long> orderIdList = orderMapper.getIdListByUserId(BaseContext.getCurrentId());
+        List<Long> orderIdList = new ArrayList<>();
+        for (Orders orders : ordersPage) {
+            orderIdList.add(orders.getId());
+        }
+
+        // 根据 orderId 查询所有 OrderDetail
+        List<OrderDetail> orderDetailList = orderDetailMapper.getByOrderIdList(orderIdList);
+
+        // 给 orderDetailList 按照 orderID 进行分类(Map(key:orderID, value:List<OrderDetail>))
+        Map<Long, List<OrderDetail>> orderDetailMap = new HashMap<>();
+        for (OrderDetail orderDetail : orderDetailList) {
+            // 判断有没有 key=orderDetail.getOrderId()
+            if (!orderDetailMap.containsKey(orderDetail.getOrderId())) {
+                orderDetailMap.put(orderDetail.getOrderId(), new ArrayList<>());    // 如果没有就创建一个新的
+            }
+            orderDetailMap.get(orderDetail.getOrderId()).add(orderDetail);
+        }
+
+        // 按照分类拼装 OrderVO
+        List<OrderVO> orderVOList = new ArrayList<>();
+        for (Orders orders : ordersPage) {
+            // 如果map中包含这个order的id作为key
+            if (orderDetailMap.containsKey(orders.getId())) {
+                // 封装结果
+                OrderVO orderVO = new OrderVO();
+                BeanUtils.copyProperties(orders, orderVO);
+                orderVO.setOrderDetailList(orderDetailMap.get(orders.getId()));
+
+                orderVOList.add(orderVO);
+            }
+        }
+
+        return orderVOList;
     }
 }
