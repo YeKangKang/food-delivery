@@ -81,6 +81,10 @@ public class OrderServiceImpl implements OrderService {
         orders.setNumber(String.valueOf(System.currentTimeMillis()));   // 用户时间戳当订单号
         orders.setPhone(ab.getPhone());                                 // 手机号（从 addressbook 对象中取）
         orders.setConsignee(ab.getConsignee());                         // 收货人（从 addressbook 对象中取）
+        orders.setAddress(ab.getProvinceName()
+                            + ab.getCityName()
+                            + ab.getDistrictName()
+                            + ab.getDetail());                          // TODO 可能需要加地址，不然后续订单详情功能为null
         orders.setUserId(BaseContext.getCurrentId());                   // 用户id
 
         orderMapper.insert(orders); // 生成的主键需要后续插入到订单明细表
