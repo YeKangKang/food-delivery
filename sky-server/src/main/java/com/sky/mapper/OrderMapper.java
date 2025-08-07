@@ -46,4 +46,12 @@ public interface OrderMapper {
      */
     @Select("select id from orders where user_id = #{userId}")
     List<Long> getIdListByUserId(@Param("userId") Long userId);
+
+    /**
+     * 查询订单详情
+     * @param id
+     * @return
+     */
+    @Select("select * from orders where id = #{id}")
+    Orders getById(@Param("id") Long id);
 }

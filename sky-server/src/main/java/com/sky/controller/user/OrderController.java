@@ -7,6 +7,7 @@ import com.sky.result.Result;
 import com.sky.service.OrderService;
 import com.sky.vo.OrderPaymentVO;
 import com.sky.vo.OrderSubmitVO;
+import com.sky.vo.OrderVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
@@ -50,11 +51,30 @@ public class OrderController {
         return Result.success(orderPaymentVO);
     }
 
+    /**
+     * 历史订单分页查询
+     * @param page
+     * @param pageSize
+     * @param status
+     * @return
+     */
     @GetMapping("/historyOrders")
     @ApiOperation(value = "历史订单（分页）查询")
     public Result<PageResult> page(@RequestParam("page") Integer page, @RequestParam("pageSize") Integer pageSize, Integer status) {
         log.info("历史订单查询，page: {}, pageSize: {}, status: {}", page, pageSize, status);
         PageResult pageResult = orderService.page(page, pageSize, status);
         return Result.success(pageResult);
+    }
+
+    /**
+     * 查询订单详情
+     * @param id
+     * @return
+     */
+    @GetMapping("/orderDetail/{id}")
+    @ApiOperation(value = "查询订单详情")
+    public Result<OrderVO> details(@PathVariable("id") Long id) {
+        OrderVO orderVO = orderService.details(id);
+        return Result.success(orderVO);
     }
 }

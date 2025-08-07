@@ -65,8 +65,9 @@ public class OrderServiceImpl implements OrderService {
             throw new AddressBookBusinessException(MessageConstant.ADDRESS_BOOK_IS_NULL);
         }
         // 异常：购物车表找不到该用户商品数据
-        ShoppingCart spc = ShoppingCart.builder().id(BaseContext.getCurrentId()).build(); // 构造一个查询 id 的实体类
-        List<ShoppingCart> shoppingCartList = shoppingCartMapper.list(spc);
+        ShoppingCart shoppingCart = new ShoppingCart();
+        shoppingCart.setUserId(BaseContext.getCurrentId()); // 按照 userId 查找
+        List<ShoppingCart> shoppingCartList = shoppingCartMapper.list(shoppingCart);
         if (shoppingCartList == null || shoppingCartList.isEmpty()) {
             throw new ShoppingCartBusinessException(MessageConstant.SHOPPING_CART_IS_NULL);
         }
@@ -252,5 +253,26 @@ public class OrderServiceImpl implements OrderService {
         }
 
         return orderVOList;
+    }
+
+    /**
+     * 查询订单详情
+     * @param id
+     * @return
+     */
+    @Override
+    public OrderVO details(Long id) {
+        // 根据 订单id 查询特定订单数据
+        Orders orders = orderMapper.getById(id);
+
+        // 根据 订单id 查询订单关系表数据
+        List<OrderDetail> orderDetail = orderDetailMapper.getByOrderId(orders.getId());
+
+        // 封装并返回
+        OrderVO orderVO = new OrderVO();
+        BeanUtils.copyProperties(orders, orderVO);  // 拷贝 orders
+        orderVO.setOrderDetailList(orderDetail);    // 拷贝 ordersDetailList
+
+        return orderVO;
     }
 }
