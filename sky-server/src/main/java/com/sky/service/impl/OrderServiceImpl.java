@@ -316,4 +316,34 @@ public class OrderServiceImpl implements OrderService {
         orders.setStatus(Orders.CANCELLED);
         orderMapper.update(orders);
     }
+
+    /**
+     * 再来一单
+     * @param id
+     * @return
+     */
+    @Override
+    public void repetition(Long id) {
+        // 再来一单就是把商品重新加到购物车中
+
+        // 根据 orderId 查询订单关系表
+        List<OrderDetail> orderDetailList = orderDetailMapper.getByOrderId(id);
+
+        // 将订单关系表数据复制到购物车对象中，补齐不全的值
+        List<ShoppingCart> shoppingCartList = new ArrayList<>();
+        if (orderDetailList != null && !orderDetailList.isEmpty()) {
+            // 给每一条订单关系的记录转移到购物车对象
+            for (OrderDetail orderDetail : orderDetailList) {
+                ShoppingCart shoppingCart = new ShoppingCart();
+                // 排除 id，防止主键冲突
+                BeanUtils.copyProperties(orderDetail, shoppingCart, "id");
+                shoppingCart.setUserId(BaseContext.getCurrentId());
+                shoppingCart.setCreateTime(LocalDateTime.now());
+                shoppingCartList.add(shoppingCart);
+            }
+        }
+
+        // 将购物车对象列表插入购物车表
+        shoppingCartMapper.insertBatch(shoppingCartList);
+    }
 }
