@@ -415,7 +415,10 @@ public class OrderServiceImpl implements OrderService {
         return String.join("", orderDishList);
     }
 
-
+    /**
+     * 各个状态的订单数量统计
+     * @return
+     */
     @Override
     public OrderStatisticsVO statistics() {
 
