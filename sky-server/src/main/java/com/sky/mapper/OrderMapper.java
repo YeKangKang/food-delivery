@@ -54,4 +54,12 @@ public interface OrderMapper {
      */
     @Select("select * from orders where id = #{id}")
     Orders getById(@Param("id") Long id);
+
+    /**
+     * 查询 待接单，待派送，派送中的订单数量
+     * @param status
+     * @return
+     */
+    @Select("select count(*) from orders where status = #{status}")
+    Integer countStatus(@Param("status") Integer status);
 }

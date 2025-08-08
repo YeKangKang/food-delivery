@@ -18,6 +18,7 @@ import com.sky.result.Result;
 import com.sky.service.OrderService;
 import com.sky.utils.WeChatPayUtil;
 import com.sky.vo.OrderPaymentVO;
+import com.sky.vo.OrderStatisticsVO;
 import com.sky.vo.OrderSubmitVO;
 import com.sky.vo.OrderVO;
 import org.aspectj.weaver.ast.Or;
@@ -414,4 +415,21 @@ public class OrderServiceImpl implements OrderService {
         return String.join("", orderDishList);
     }
 
+
+    @Override
+    public OrderStatisticsVO statistics() {
+
+        // 查询 待接单，待派送，派送中的订单数量
+        Integer toBeConfirmed = orderMapper.countStatus(Orders.TO_BE_CONFIRMED);    // 待接单（2）
+        Integer confirmed = orderMapper.countStatus(Orders.CONFIRMED);  // 待派送（3）
+        Integer deliveryInProgress = orderMapper.countStatus(Orders.DELIVERY_IN_PROGRESS);  // 派送中（4）
+
+        // 准备返回对象
+        OrderStatisticsVO orderStatisticsVO = new OrderStatisticsVO();
+        orderStatisticsVO.setToBeConfirmed(toBeConfirmed);
+        orderStatisticsVO.setConfirmed(confirmed);
+        orderStatisticsVO.setDeliveryInProgress(deliveryInProgress);
+
+        return orderStatisticsVO;
+    }
 }
