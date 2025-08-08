@@ -5,9 +5,7 @@ import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
 import com.sky.constant.MessageConstant;
 import com.sky.context.BaseContext;
-import com.sky.dto.OrdersPageQueryDTO;
-import com.sky.dto.OrdersPaymentDTO;
-import com.sky.dto.OrdersSubmitDTO;
+import com.sky.dto.*;
 import com.sky.entity.*;
 import com.sky.exception.AddressBookBusinessException;
 import com.sky.exception.OrderBusinessException;
@@ -434,5 +432,64 @@ public class OrderServiceImpl implements OrderService {
         orderStatisticsVO.setDeliveryInProgress(deliveryInProgress);
 
         return orderStatisticsVO;
+    }
+
+    /**
+     * 接单
+     * @param ordersConfirmDTO
+     */
+    @Override
+    public void confirm(OrdersConfirmDTO ordersConfirmDTO) {
+        // 查询订单是否存在
+        Orders orders = orderMapper.getById(ordersConfirmDTO.getId());
+        if (orders == null) {
+            throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);
+        }
+
+        // 配置 Order 实体类，修改数据库订单状态
+        Orders o = Orders.builder()
+                .id(ordersConfirmDTO.getId())
+                .status(Orders.CONFIRMED)   // 接单3
+                .build();
+        orderMapper.update(o);
+    }
+
+    /**
+     * 拒单
+     * @param rejectionDTO
+     */
+    @Override
+    public void rejection(OrdersRejectionDTO rejectionDTO) {
+        Orders orders = orderMapper.getById(rejectionDTO.getId());
+
+        // 判断订单是否存在
+        if (orders == null) {
+            throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);
+        }
+
+        // 判断订单是否为待接单
+        if (!orders.getStatus().equals(Orders.TO_BE_CONFIRMED)) {
+            throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
+        }
+
+        // 如果用户已经付款，则先为用户退款
+        Integer payStatus = orders.getPayStatus();  //支付状态 0未支付 1已支付 2退款
+        Orders o = new Orders();    // 实体类
+        if (payStatus == OrderVO.PAID) {
+            //用户已支付，需要退款
+//            String refund = weChatPayUtil.refund(
+//                    orders.getNumber(),
+//                    orders.getNumber(),
+//                    new BigDecimal(0.01),
+//                    new BigDecimal(0.01));
+//            log.info("申请退款：{}", refund);
+            o.setPayStatus(Orders.REFUND);  // 设置退款状态
+        }
+        o.setId(orders.getId());    // 复制id
+        o.setStatus(Orders.CANCELLED);  // 设置订单状态
+        o.setRejectionReason(rejectionDTO.getRejectionReason());    // 设置拒单原因
+        o.setCancelTime(LocalDateTime.now());   // 设置取消订单时间
+
+        orderMapper.update(o);
     }
 }
