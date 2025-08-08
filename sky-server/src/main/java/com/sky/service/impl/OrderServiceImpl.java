@@ -485,11 +485,46 @@ public class OrderServiceImpl implements OrderService {
 //            log.info("申请退款：{}", refund);
             o.setPayStatus(Orders.REFUND);  // 设置退款状态
         }
-        o.setId(orders.getId());    // 复制id
+        o.setId(rejectionDTO.getId());  // 复制id
         o.setStatus(Orders.CANCELLED);  // 设置订单状态
         o.setRejectionReason(rejectionDTO.getRejectionReason());    // 设置拒单原因
         o.setCancelTime(LocalDateTime.now());   // 设置取消订单时间
 
         orderMapper.update(o);
     }
+
+    /**
+     * 商家取消订单
+     * @param ordersCancelDTO
+     * @return
+     */
+    @Override
+    public void adminCancel(OrdersCancelDTO ordersCancelDTO) {
+        // 查询订单是否存在
+        Orders orders = orderMapper.getById(ordersCancelDTO.getId());
+        if (orders == null) {
+            throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);
+        }
+
+        // 检查订单付款状态，如果用户已经付款，则为用户退款并修改订单状态
+        Orders o = new Orders();
+        if (orders.getPayStatus().equals(Orders.PAID)) {    //支付状态 0未支付 1已支付 2退款
+            //用户已支付，需要退款
+//            String refund = weChatPayUtil.refund(
+//                    orders.getNumber(),
+//                    orders.getNumber(),
+//                    new BigDecimal(0.01),
+//                    new BigDecimal(0.01));
+//            log.info("申请退款：{}", refund);
+            o.setPayStatus(Orders.REFUND);
+        }
+        o.setId(ordersCancelDTO.getId());
+        o.setStatus(Orders.CANCELLED);
+        o.setCancelReason(ordersCancelDTO.getCancelReason());
+        o.setCancelTime(LocalDateTime.now());
+
+        orderMapper.update(o);
+    }
+
+
 }
