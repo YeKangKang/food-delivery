@@ -25,6 +25,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -32,6 +33,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class OrderServiceImpl implements OrderService {
@@ -346,4 +348,70 @@ public class OrderServiceImpl implements OrderService {
         // 将购物车对象列表插入购物车表
         shoppingCartMapper.insertBatch(shoppingCartList);
     }
+
+    /**
+     * 管理端订单分页搜索
+     * @param ordersPageQueryDTO
+     * @return
+     */
+    @Override
+    public PageResult conditionSearch(OrdersPageQueryDTO ordersPageQueryDTO) {
+        // 设置 PageHelper自动分页, 其会自动在 SQL 结尾添加 LIMIT 实现分页，还有单独发一条 COUNT(*)
+        PageHelper.startPage(ordersPageQueryDTO.getPage(), ordersPageQueryDTO.getPageSize());
+
+        // 准备封装数据：根据前端需求查询分页结果
+        Page<Orders> page = orderMapper.pageQuery(ordersPageQueryDTO);
+
+        // 准备封装数据
+        List<OrderVO> orderVOList = new ArrayList<>();
+
+        if (!CollectionUtils.isEmpty(page)) {   // 只有查到了order才执行
+
+            // 准备封装数据：获得这些order对应的所有商品关系
+            List<Long> orderIdList = new ArrayList<>();
+            for (Orders orders : page) {
+                orderIdList.add(orders.getId());
+            }
+
+            // 使用 Map 以orderID为key进行分组
+            List<OrderDetail> orderDetailList = orderDetailMapper.getByOrderIdList(orderIdList);    // 获取的所有商品关系数据（未分组）
+            Map<Long, List<OrderDetail>> orderDetailMap = new HashMap<>();
+            for (OrderDetail orderDetail : orderDetailList) {
+                if (!orderDetailMap.containsKey(orderDetail.getOrderId())) {
+                    orderDetailMap.put(orderDetail.getOrderId(), new ArrayList<>());
+                }
+                orderDetailMap.get(orderDetail.getOrderId()).add(orderDetail);
+            }
+
+            // 封装数据:（OrderVO = Order + （String）orderDishes）
+            for (Orders orders : page) {
+                // 每个 order 取出和他们对应的商品关系数据封装
+                if (orderDetailMap.containsKey(orders.getId())) {
+                    OrderVO orderVO = new OrderVO();
+                    BeanUtils.copyProperties(orders, orderVO);  // 拷贝 Order 数据到 orderVO
+                    String orderDishes = getOrderDetailByStr(orderDetailMap.get(orders.getId()));
+                    orderVO.setOrderDishes(orderDishes);
+                    orderVOList.add(orderVO);
+                }
+            }
+        }
+        return new PageResult(page.getTotal(), orderVOList);
+    }
+
+    /**
+     * 将该订单的所有商品信息拼接为字符串返回
+     * @param orderDetailList
+     * @return
+     */
+    private String getOrderDetailByStr(List<OrderDetail> orderDetailList) {
+        // 将每一条订单菜品信息拼接为字符串（格式：宫保鸡丁*3；）
+        List<String> orderDishList = orderDetailList.stream().map(x -> {
+            String orderDish = x.getName() + "*" + x.getNumber() + ";";
+            return orderDish;
+        }).collect(Collectors.toList());
+
+        // 将该订单对应的所有菜品信息拼接在一起
+        return String.join("", orderDishList);
+    }
+
 }
