@@ -175,7 +175,7 @@ public class OrderServiceImpl implements OrderService {
         orderMapper.update(orders);
 
         // 通过 WebSocket 向客户端浏览器推送消息【type，orderId，content】
-        Map map = new HashMap();
+        Map map = new HashMap();    // 原始类型，相当于Map<Object, Object>
         map.put("type", 1);                             // 1:来单提醒 2:客户催单
         map.put("orderId", ordersDB.getId());           // 订单 ID
         map.put("content", "订单号：" + outTradeNo);     // 提示给管理端的信息
@@ -588,5 +588,27 @@ public class OrderServiceImpl implements OrderService {
         orders.setDeliveryTime(LocalDateTime.now());
 
         orderMapper.update(orders);
+    }
+
+    /**
+     * 客户催单（WebSocket 实现）
+     * @param id
+     */
+    @Override
+    public void reminder(Long id) {
+        // 校验订单是否存在
+        Orders ordersDB = orderMapper.getById(id);
+        if (ordersDB == null) {
+            throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);
+        }
+
+        // 催单不涉及到数据库，只需要封装和前端协定的数据并使用 WebSocket 发送给管理端即可
+        Map map = new HashMap();
+        map.put("type", 2);                                     // 1来单提醒，2客户催单
+        map.put("orderId", id);                                 // 订单ID
+        map.put("content", "订单号：" + ordersDB.getNumber());  // 订单号
+        String jsonString = JSON.toJSONString(map); // 转换为 JSON 字符串
+
+        webSocketServer.sendToAllClient(jsonString);    // 使用 WebSocket 提醒所有服务端
     }
 }

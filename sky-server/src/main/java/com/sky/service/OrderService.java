@@ -104,4 +104,10 @@ public interface OrderService {
      * @return
      */
     void complete(Long id);
+
+    /**
+     * 用户催单（WebSocket 实现）
+     * @param id
+     */
+    void reminder(Long id);
 }
