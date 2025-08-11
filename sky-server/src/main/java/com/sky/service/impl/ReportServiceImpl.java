@@ -1,11 +1,14 @@
 package com.sky.service.impl;
 
 import com.sky.constant.MessageConstant;
+import com.sky.dto.GoodsSalesDTO;
 import com.sky.entity.Orders;
+import com.sky.mapper.OrderDetailMapper;
 import com.sky.mapper.OrderMapper;
 import com.sky.mapper.UserMapper;
 import com.sky.service.ReportService;
 import com.sky.vo.OrderReportVO;
+import com.sky.vo.SalesTop10ReportVO;
 import com.sky.vo.TurnoverReportVO;
 import com.sky.vo.UserReportVO;
 import lombok.extern.slf4j.Slf4j;
@@ -17,6 +20,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * 数据统计相关服务
@@ -30,6 +34,9 @@ public class ReportServiceImpl implements ReportService {
 
     @Autowired
     private UserMapper userMapper;
+
+    @Autowired
+    private OrderDetailMapper orderDetailMapper;
 
     /**
      * 统计指定时间区间内的营业额
@@ -179,5 +186,33 @@ public class ReportServiceImpl implements ReportService {
         map.put("status", status);
 
         return orderMapper.countByMap(map);
+    }
+
+    /**
+     * 销量排名Top10
+     * @param begin
+     * @param end
+     * @return
+     */
+    @Override
+    public SalesTop10ReportVO getTop10(LocalDate begin, LocalDate end) {
+        LocalDateTime beginTime = LocalDateTime.of(begin, LocalTime.MIN);
+        LocalDateTime endTime = LocalDateTime.of(end, LocalTime.MAX);
+
+        // 多表查询前十的商品名称和销量（只查询有效订单，同时满足时间范围的）
+        List<GoodsSalesDTO> salesTop10 = orderMapper.getSalesTop10(beginTime, endTime);
+
+        // 将集合里面的 name 拿到并组成一个新的集合对象
+        List<String> nameList = salesTop10.stream().map(GoodsSalesDTO::getName).collect(Collectors.toList());   // 拿到 GoodsSalesDTO::getName，然后封装成新的集合对象
+        List<Integer> numberList = salesTop10.stream().map(GoodsSalesDTO::getNumber).collect(Collectors.toList());  // 拿到 GoodsSalesDTO::getNumber，然后封装为集合对象
+
+        // 转换为 String，用逗号分隔
+        String nameListString = StringUtils.join(nameList, ",");
+        String numberListString = StringUtils.join(numberList, ",");
+
+        return SalesTop10ReportVO.builder()
+                .nameList(nameListString)
+                .numberList(numberListString)
+                .build();
     }
 }
